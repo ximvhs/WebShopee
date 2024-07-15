@@ -20,11 +20,11 @@ const InputPassWordStyles = styled.div`
   }
 `
 
-const InputPassWord = () => {
+const InputPassWord = ({ ...props }) => {
   const [toggle, setToggle] = useState(false)
   return (
     <InputPassWordStyles>
-      <Input type={toggle ? 'text' : 'password'} className='input' name='password' placeholder='Password'>
+      <Input type={toggle ? 'text' : 'password'} className='input' name='password' {...props}>
         {toggle ? (
           <EyeOpen className='input-icon' onClick={() => setToggle(false)}></EyeOpen>
         ) : (

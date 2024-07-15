@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import Input from '../../components/input/index'
+import Input from '../../components/input/Input'
 import InputPassWord from '../../components/input/InputPassWord'
 import Button from '../../components/button'
 import RegisterFace from '../../components/register'
@@ -15,7 +15,7 @@ export default function Login() {
             <form className='p-10 bg-white rounded shadow-sm'>
               <div className='text-2xl'>Đăng Nhập</div>
               <Input name='Email' placeholder='Email'></Input>
-              <InputPassWord></InputPassWord>
+              <InputPassWord placeholder='Password'></InputPassWord>
               <p className='float-right text-[12px] text-[#05a] mt-2 hover:opacity-80 cursor-pointer transition-all'>
                 Quên mật khẩu
               </p>
@@ -30,9 +30,9 @@ export default function Login() {
                 <RegisterGG></RegisterGG>
               </div>
               <div className='flex justify-center mt-5'>
-                <span className='text-sm text-gray-300'>Bạn đã có tài khoản?</span>
+                <span className='text-sm text-gray-300'>Bạn chưa có tài khoản?</span>
                 <Link className='ml-2 text-sm hover:underline text-primary' to='/register'>
-                  Đăng nhập
+                  Đăng ký
                 </Link>
               </div>
             </form>
