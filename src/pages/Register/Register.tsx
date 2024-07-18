@@ -1,34 +1,58 @@
 import { Link } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { useForm } from 'react-hook-form'
+import { Omit, omit } from 'lodash'
+
+import { getRules, Schema, schema } from '../../utils/rules'
 import Button from '../../components/button'
-// import InputPassWord from '../../components/input/InputPassWord'
 import Input from '../../components/input/Input'
 import RegisterFace from '../../components/register'
 import RegisterGG from '../../components/register/RegisterGG'
-import { useForm } from 'react-hook-form'
-import { getRules, schema } from '../..//utils/rules'
-import { yupResolver } from '@hookform/resolvers/yup'
+import authApi from '../../apis/auth.api'
+import { isAxioUnprocessableEntityError } from '../../utils/utils'
+import { ResponseApi } from '../../types/utils.type'
 
-interface FormData {
-  email: string
-  password: string
-  confirm_password: string
-}
+type FormData = Pick<Schema, 'email' | 'password' | 'confirm_password'>
+const registerSchema = schema.pick(['email', 'password', 'confirm_password'])
 
 export default function Register() {
   const {
     register,
     handleSubmit,
     getValues,
+    setError,
     formState: { errors }
   } = useForm<FormData>({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(registerSchema)
+  })
+
+  const registerAccountMutation = useMutation({
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.registerAccount(body)
   })
 
   const rules = getRules(getValues)
 
   const onSubmit = handleSubmit((data) => {
-    const password = getValues('password')
-    console.log('password: ', password)
+    const body = omit(data, ['confirm_password'])
+    registerAccountMutation.mutate(body, {
+      onSuccess: (data) => {
+        console.log(data)
+      },
+      onError: (error) => {
+        if (isAxioUnprocessableEntityError<ResponseApi<Omit<FormData, 'confirm_password'>>>(error)) {
+          const formError = error.response?.data.data
+          if (formError) {
+            Object.keys(formError).forEach((key) => {
+              setError(key as keyof Omit<FormData, 'confirm_password'>, {
+                message: formError[key as keyof Omit<FormData, 'confirm_password'>],
+                type: 'Server'
+              })
+            })
+          }
+        }
+      }
+    })
   })
 
   return (
@@ -68,7 +92,9 @@ export default function Register() {
                 rules={rules.confirm_password}
                 autoComplete='on'
               ></Input>
-              <Button className='my-5'>Đăng Ký</Button>
+              <div className='my-2'>
+                <Button>Đăng Ký</Button>
+              </div>
               <div className='flex items-center'>
                 <div className='bg-[#dbdbdb] flex-1 h-[1px] w-full'></div>
                 <span className='px-5 text-[#dbdbdb] text-sm'>HOẶC</span>
@@ -89,7 +115,7 @@ export default function Register() {
                 </span>
               </div>
               <div className='flex justify-center mt-5'>
-                <span className='text-sm text-gray-300'>Bạn chưa có tài khoản?</span>
+                <span className='text-sm text-gray-300'>Bạn đã có tài khoản?</span>
                 <Link className='ml-2 text-sm hover:underline text-primary' to='/login'>
                   Đăng nhập
                 </Link>
