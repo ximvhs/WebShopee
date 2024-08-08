@@ -1,32 +1,53 @@
 import { Link } from 'react-router-dom'
 import Input from '../../components/input/Input'
-import InputPassWord from '../../components/input/InputPassWord'
 import Button from '../../components/button'
 import RegisterFace from '../../components/register'
 import RegisterGG from '../../components/register/RegisterGG'
-import { getRules, schema } from '../../utils/rules'
+import { Schema, schema } from '../../utils/rules'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation } from '@tanstack/react-query'
+import { isAxioUnprocessableEntityError } from '../../utils/utils'
+import { ResponseApi } from '../../types/utils.type'
+import authApi from '../../apis/auth.api'
 
-interface FormData {
-  email: string
-  password: string
-  confirm_password: string
-}
+type FormData = Pick<Schema, 'confirm_password'>
+const loginSchema = schema.omit(['confirm_password'])
 
 export default function Login() {
   const {
+    setError,
     register,
     handleSubmit,
-    getValues,
     formState: { errors }
   } = useForm<FormData>({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(loginSchema)
   })
-  const rules = getRules(getValues)
 
-  const onSubmit = handleSubmit((value) => {
-    console.log('value: ', value)
+  const loginMutation = useMutation({
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.login(body)
+  })
+
+  const onSubmit = handleSubmit((data) => {
+    console.log('data: ', data)
+    loginMutation.mutate(data, {
+      onSuccess: (data) => {
+        console.log(data)
+      },
+      onError: (error) => {
+        if (isAxioUnprocessableEntityError<ResponseApi<FormData>>(error)) {
+          const formError = error.response?.data.data
+          if (formError) {
+            Object.keys(formError).forEach((key) => {
+              setError(key as keyof FormData, {
+                message: formError[key as keyof FormData],
+                type: 'Server'
+              })
+            })
+          }
+        }
+      }
+    })
   })
 
   return (
@@ -41,20 +62,20 @@ export default function Login() {
                 name='email'
                 register={register}
                 type='email'
-                className='mt-2'
+                className='mt-8'
                 errorMessage={errors.email?.message}
                 placeholder='Email'
-                rules={rules.email}
-              ></Input>
+              />
               <Input
                 name='password'
                 register={register}
                 type='password'
                 className='mt-2'
+                classNameEye='absolute right-[5px] h-5 w-5 cursor-pointer top-[12px]'
                 errorMessage={errors.password?.message}
                 placeholder='Password'
-                rules={rules.password}
-              ></Input>
+                autoComplete='on'
+              />
               {/* <InputPassWord placeholder='Password'></InputPassWord> */}
               <p className='float-right text-[12px] text-[#05a] mt-2 hover:opacity-80 cursor-pointer transition-all'>
                 Quên mật khẩu
