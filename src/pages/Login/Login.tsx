@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Input from '../../components/input/Input'
 import Button from '../../components/button'
 import RegisterFace from '../../components/register'
@@ -8,13 +8,17 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation } from '@tanstack/react-query'
 import { isAxioUnprocessableEntityError } from '../../utils/utils'
-import { ResponseApi } from '../../types/utils.type'
+import { ErrorResponse } from '../../types/utils.type'
 import authApi from '../../apis/auth.api'
+import { useContext } from 'react'
+import { AppContext } from '../../contexts/app.context'
 
 type FormData = Pick<Schema, 'confirm_password'>
 const loginSchema = schema.omit(['confirm_password'])
 
 export default function Login() {
+  const { setIsAuthenticated, setProfile } = useContext(AppContext)
+  const navigate = useNavigate()
   const {
     setError,
     register,
@@ -29,13 +33,14 @@ export default function Login() {
   })
 
   const onSubmit = handleSubmit((data) => {
-    console.log('data: ', data)
     loginMutation.mutate(data, {
       onSuccess: (data) => {
-        console.log(data)
+        setIsAuthenticated(true)
+        setProfile(data.data.data.user)
+        navigate('/')
       },
       onError: (error) => {
-        if (isAxioUnprocessableEntityError<ResponseApi<FormData>>(error)) {
+        if (isAxioUnprocessableEntityError<ErrorResponse<FormData>>(error)) {
           const formError = error.response?.data.data
           if (formError) {
             Object.keys(formError).forEach((key) => {
@@ -80,7 +85,14 @@ export default function Login() {
               <p className='float-right text-[12px] text-[#05a] mt-2 hover:opacity-80 cursor-pointer transition-all'>
                 Quên mật khẩu
               </p>
-              <Button className='my-5'>Đăng nhập</Button>
+              <Button
+                type='submit'
+                className='flex items-center justify-center w-full px-2 py-4 text-sm text-center text-white uppercase bg-primary hover:bg-red-600'
+                isLoading={loginMutation.isLoading}
+                disabled={loginMutation.isLoading}
+              >
+                Đăng nhập
+              </Button>
               <div className='flex items-center'>
                 <div className='bg-[#dbdbdb] flex-1 h-[1px] w-full'></div>
                 <span className='px-5 text-[#dbdbdb] text-sm'>HOẶC</span>
